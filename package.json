@@ -8,23 +8,27 @@
     "dev": "electrobun dev --watch",
     "dev:hmr": "concurrently \"bun run hmr\" \"bun run start\"",
     "hmr": "vite --port 5173",
-    "build:canary": "vite build && electrobun build --env=canary"
+    "build:canary": "vite build && electrobun build --env=canary",
+    "db:push": "bunx drizzle-kit push",
+    "db:generate": "bunx drizzle-kit generate"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "drizzle-orm": "^1.0.0-beta.19",
     "electrobun": "1.16.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.7.2",
+    "@types/bun": "^1.3.11",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.27",
     "concurrently": "^9.1.0",
+    "drizzle-kit": "^1.0.0-beta.19",
     "tailwindcss": "^4.2.2",
+    "typescript": "^5.7.2",
     "vite": "^6.0.3"
   }
 }

@@ -3,3 +3,4 @@ dist/**
 dist-win-x64/**
 build/**
 artifacts/**
+drizzle/**
