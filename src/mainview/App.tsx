@@ -1,32 +1,9 @@
 import { useEffect, useState } from "react";
 import Electrobun, { Electroview } from "electrobun/view";
+import type { Todo, TodoRPC } from "../shared/types";
 
-type Todo = {
-	id: number;
-	title: string;
-	completed: number;
-	created_at: string;
-	updated_at: string;
-};
 
-type TodoRPC = {
-	bun: {
-		requests: {
-			getTodos: { params: {}; response: Todo[] };
-			addTodo: { params: { title: string }; response: Todo };
-			updateTodo: { params: { id: number; title: string }; response: Todo };
-			toggleTodo: { params: { id: number }; response: Todo };
-			deleteTodo: { params: { id: number }; response: { success: boolean } };
-			clearCompleted: { params: {}; response: { deleted: number } };
-			getStats: { params: {}; response: { total: number; completed: number } };
-		};
-		messages: {};
-	};
-	webview: {
-		requests: {};
-		messages: {};
-	};
-};
+
 
 const rpc = Electroview.defineRPC<TodoRPC>({
 	maxRequestTime: 5000,

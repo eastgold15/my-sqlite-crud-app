@@ -1,8 +1,7 @@
-import { BrowserView, BrowserWindow, Utils, type RPCSchema } from "electrobun/bun";
-import { db } from './db/index'
-import { Updater } from "electrobun/bun";
-import { todoTable } from "./db/index";
-import { eq, sql, count, sum, desc } from "drizzle-orm";
+import { count, desc, eq, sum } from "drizzle-orm";
+import { BrowserView, BrowserWindow, Updater } from "electrobun/bun";
+import type { Todo, TodoRPC } from "../shared/types";
+import { db, todoTable } from './db/index';
 // // Ensure data directory exists
 // const dataDir = Utils.paths.userData;
 // if (!existsSync(dataDir)) {
@@ -35,58 +34,11 @@ import { eq, sql, count, sum, desc } from "drizzle-orm";
 // const deleteCompleted = db.prepare("DELETE FROM todos WHERE completed = 1");
 // const getStats = db.prepare("SELECT COUNT(*) as total, SUM(completed) as completed FROM todos");
 
-type Todo = {
-  id: number;
-  title: string;
-  completed: number;
-  created_at: string;
-  updated_at: string;
-};
 
-type Stats = {
-  total: number;
-  completed: number;
-};
 
-type TodoRPC = {
-  bun: RPCSchema<{
-    requests: {
-      getTodos: {
-        params: {};
-        response: Todo[];
-      };
-      addTodo: {
-        params: { title: string };
-        response: Todo;
-      };
-      updateTodo: {
-        params: { id: number; title: string };
-        response: Todo;
-      };
-      toggleTodo: {
-        params: { id: number };
-        response: Todo;
-      };
-      deleteTodo: {
-        params: { id: number };
-        response: { success: boolean };
-      };
-      clearCompleted: {
-        params: {};
-        response: { deleted: number };
-      };
-      getStats: {
-        params: {};
-        response: Stats;
-      };
-    };
-    messages: {};
-  }>;
-  webview: RPCSchema<{
-    requests: {};
-    messages: {};
-  }>;
-};
+
+
+
 
 const todoRPC = BrowserView.defineRPC<TodoRPC>({
   maxRequestTime: 5000,

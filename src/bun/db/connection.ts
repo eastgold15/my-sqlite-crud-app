@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Utils } from "electrobun/bun";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
-import { relations } from ".";
+import { relations } from "./relation";
 
 // Ensure data directory exists
 const dataDir = Utils.paths.userData;
