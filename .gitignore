@@ -1,0 +1,4 @@
+node_modules/**
+dist/**
+dist-win-x64/**
+build/**
