@@ -23,6 +23,7 @@ export type TodoRPC = {
       deleteTodo: { params: { id: number }; response: { success: boolean } };
       clearCompleted: { params: {}; response: { deleted: number } };
       getStats: { params: {}; response: Stats };
+      closeWindow: { params: {}; response: void };
     };
     messages: {};
   }>;
