@@ -1,111 +1,218 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Electrobun, { Electroview } from "electrobun/view";
+
+type Todo = {
+	id: number;
+	title: string;
+	completed: number;
+	created_at: string;
+	updated_at: string;
+};
+
+type TodoRPC = {
+	bun: {
+		requests: {
+			getTodos: { params: {}; response: Todo[] };
+			addTodo: { params: { title: string }; response: Todo };
+			updateTodo: { params: { id: number; title: string }; response: Todo };
+			toggleTodo: { params: { id: number }; response: Todo };
+			deleteTodo: { params: { id: number }; response: { success: boolean } };
+			clearCompleted: { params: {}; response: { deleted: number } };
+			getStats: { params: {}; response: { total: number; completed: number } };
+		};
+		messages: {};
+	};
+	webview: {
+		requests: {};
+		messages: {};
+	};
+};
+
+const rpc = Electroview.defineRPC<TodoRPC>({
+	maxRequestTime: 5000,
+	handlers: { requests: {}, messages: {} },
+});
+
+const electrobun = new Electrobun.Electroview({ rpc });
+
+type FilterType = "all" | "active" | "completed";
 
 function App() {
-	const [count, setCount] = useState(0);
+	const [todos, setTodos] = useState<Todo[]>([]);
+	const [filter, setFilter] = useState<FilterType>("all");
+	const [inputValue, setInputValue] = useState("");
+	const [stats, setStats] = useState({ total: 0, completed: 0 });
+
+	// 加载todos
+	useEffect(() => {
+		loadTodos();
+		loadStats();
+	}, []);
+
+	async function loadTodos() {
+		const data = await electrobun.rpc!.request.getTodos({});
+		setTodos(data);
+	}
+
+	async function loadStats() {
+		const data = await electrobun.rpc!.request.getStats({});
+		setStats(data);
+	}
+
+	async function addTodo() {
+		const title = inputValue.trim();
+		if (!title) return;
+		await electrobun.rpc!.request.addTodo({ title });
+		setInputValue("");
+		await loadTodos();
+		await loadStats();
+	}
+
+	async function toggleTodo(id: number) {
+		await electrobun.rpc!.request.toggleTodo({ id });
+		await loadTodos();
+		await loadStats();
+	}
+
+	async function deleteTodo(id: number) {
+		await electrobun.rpc!.request.deleteTodo({ id });
+		await loadTodos();
+		await loadStats();
+	}
+
+	async function clearCompleted() {
+		await electrobun.rpc!.request.clearCompleted({});
+		await loadTodos();
+		await loadStats();
+	}
+
+	function getFilteredTodos(): Todo[] {
+		switch (filter) {
+			case "active":
+				return todos.filter((t) => !t.completed);
+			case "completed":
+				return todos.filter((t) => t.completed);
+			default:
+				return todos;
+		}
+	}
+
+	function formatDate(dateStr: string): string {
+		const date = new Date(dateStr + "Z");
+		return date.toLocaleDateString(undefined, {
+			month: "short",
+			day: "numeric",
+		});
+	}
+
+	const filteredTodos = getFilteredTodos();
+	const activeCount = stats.total - stats.completed;
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 text-gray-900">
-			<div className="container mx-auto px-4 py-10 max-w-3xl">
-				<h1 className="text-5xl font-bold text-center text-white mb-2 drop-shadow-lg">
-					React + Tailwind + Vite
+			<div className="container mx-auto px-4 py-10 max-w-2xl">
+				{/* Header */}
+				<h1 className="text-4xl font-bold text-center text-white mb-2 drop-shadow-lg">
+					Todo App
 				</h1>
-				<p className="text-xl text-center text-white/90 mb-10">
-					A fast Electrobun app with hot module replacement
+				<p className="text-center text-white/90 mb-8">
+					React + Electrobun RPC
 				</p>
 
-				<div className="bg-white rounded-xl shadow-xl p-8 mb-8">
-					<h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-						Interactive Counter
-					</h2>
-					<p className="mb-4 text-gray-600">
-						Click the button below to test React state. With HMR enabled, you
-						can edit this component and see changes instantly without losing
-						state.
-					</p>
-					<div className="flex items-center gap-4">
+				{/* Main Card */}
+				<div className="bg-white rounded-xl shadow-xl p-6 mb-6">
+					{/* Input */}
+					<div className="flex gap-2 mb-6">
+						<input
+							type="text"
+							id="new-todo"
+							value={inputValue}
+							onChange={(e) => setInputValue(e.target.value)}
+							onKeyDown={(e) => e.key === "Enter" && addTodo()}
+							placeholder="添加新任务..."
+							className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+						/>
 						<button
-							onClick={() => setCount((c) => c + 1)}
-							className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg"
+							onClick={addTodo}
+							className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
 						>
-							Count: {count}
-						</button>
-						<button
-							onClick={() => setCount(0)}
-							className="px-4 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
-						>
-							Reset
+							添加
 						</button>
 					</div>
-				</div>
 
-				<div className="bg-white rounded-xl shadow-xl p-8 mb-8">
-					<h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-						Getting Started
-					</h2>
-					<ul className="space-y-3 text-gray-700">
-						<li className="flex items-start gap-2">
-							<span className="text-indigo-500 font-bold">1.</span>
-							<span>
-								Run{" "}
-								<code className="bg-gray-100 px-2 py-1 rounded text-sm">
-									bun run dev
-								</code>{" "}
-								for development without HMR
-							</span>
-						</li>
-						<li className="flex items-start gap-2">
-							<span className="text-indigo-500 font-bold">2.</span>
-							<span>
-								Run{" "}
-								<code className="bg-gray-100 px-2 py-1 rounded text-sm">
-									bun run dev:hmr
-								</code>{" "}
-								for development with hot reload
-							</span>
-						</li>
-						<li className="flex items-start gap-2">
-							<span className="text-indigo-500 font-bold">3.</span>
-							<span>
-								Run{" "}
-								<code className="bg-gray-100 px-2 py-1 rounded text-sm">
-									bun run build
-								</code>{" "}
-								to build for production
-							</span>
-						</li>
+					{/* Filters */}
+					<div className="flex gap-2 mb-6">
+						{(["all", "active", "completed"] as FilterType[]).map((f) => (
+							<button
+								key={f}
+								onClick={() => setFilter(f)}
+								className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+									filter === f
+										? "bg-indigo-600 text-white"
+										: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+								}`}
+							>
+								{f === "all" ? "全部" : f === "active" ? "进行中" : "已完成"}
+							</button>
+						))}
+					</div>
+
+					{/* Todo List */}
+					<ul id="todo-list" className="space-y-2 mb-6">
+						{filteredTodos.length === 0 ? (
+							<li className="text-center text-gray-400 py-8">暂无任务</li>
+						) : (
+							filteredTodos.map((todo) => (
+								<li
+									key={todo.id}
+									className={`todo-item flex items-center gap-3 p-4 bg-gray-50 rounded-lg group ${
+										todo.completed ? "completed" : ""
+									}`}
+								>
+									<input
+										type="checkbox"
+										checked={todo.completed === 1}
+										onChange={() => toggleTodo(todo.id)}
+										className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+									/>
+									<span
+										className={`flex-1 todo-text ${
+											todo.completed ? "line-through text-gray-400" : ""
+										}`}
+									>
+										{todo.title}
+									</span>
+									<span className="text-sm text-gray-400 todo-date">
+										{formatDate(todo.created_at)}
+									</span>
+									<button
+										onClick={() => deleteTodo(todo.id)}
+										className="delete-btn opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+									>
+										&times;
+									</button>
+								</li>
+							))
+						)}
 					</ul>
-				</div>
 
-				<div className="bg-white rounded-xl shadow-xl p-8">
-					<h2 className="text-2xl font-semibold text-indigo-600 mb-4">Stack</h2>
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<div className="text-3xl mb-2">⚡</div>
-							<div className="font-medium">Electrobun</div>
+					{/* Stats & Clear */}
+					<div className="flex items-center justify-between pt-4 border-t border-gray-200">
+						<div id="stats" className="text-gray-600">
+							{activeCount} 个待办，{stats.completed} 个已完成
 						</div>
-						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<div className="text-3xl mb-2">⚛️</div>
-							<div className="font-medium">React</div>
-						</div>
-						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<div className="text-3xl mb-2">🎨</div>
-							<div className="font-medium">Tailwind</div>
-						</div>
-						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<div className="text-3xl mb-2">🔥</div>
-							<div className="font-medium">Vite HMR</div>
-						</div>
+						<button
+							onClick={clearCompleted}
+							className="px-4 py-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+						>
+							清除已完成
+						</button>
 					</div>
 				</div>
 
-				<div className="text-center text-white/80 mt-10 p-6 bg-white/10 rounded-lg backdrop-blur">
-					<p>
-						Edit{" "}
-						<code className="bg-white/20 px-2 py-1 rounded text-sm">
-							src/mainview/App.tsx
-						</code>{" "}
-						and save to see HMR in action
-					</p>
+				{/* Info */}
+				<div className="text-center text-white/80 text-sm">
+					<p>使用 React + Electrobun RPC 构建</p>
 				</div>
 			</div>
 		</div>
