@@ -22,6 +22,12 @@
     "noPropertyAccessFromIndexSignature": true,
     "useDefineForClassFields": true,
     "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/mainview/*"
+      ]
+    }
   },
   "include": [
     "src/**/*"
